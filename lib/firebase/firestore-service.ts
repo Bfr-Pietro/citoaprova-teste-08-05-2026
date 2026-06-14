@@ -8,6 +8,8 @@ import {
   orderBy,
   limit,
   getDocs,
+  addDoc,
+  deleteDoc,
   serverTimestamp,
   Timestamp,
   increment,
@@ -463,5 +465,111 @@ export const getAllUsers = async (adminUid: string): Promise<UserProfileData[]> 
   } catch (error) {
     console.error('Error getting all users:', error)
     return []
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIMULADO FINAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SimuladoQuestion {
+  id: string
+  enunciado: string
+  alternativas: [string, string, string, string]
+  respostaCorreta: 0 | 1 | 2 | 3
+  explicacao: string
+  /** Imagem opcional armazenada como data URL (base64) diretamente no Firestore. Máx ~500KB. */
+  imagemBase64: string
+  ordem: number
+  updatedAt?: Timestamp
+}
+
+// Busca todas as questões do simulado final, ordenadas por 'ordem'
+export const getSimuladoQuestions = async (): Promise<SimuladoQuestion[]> => {
+  try {
+    const colRef = collection(db, 'simuladoFinal')
+    const q = query(colRef, orderBy('ordem', 'asc'))
+    const snap = await getDocs(q)
+    const questions: SimuladoQuestion[] = []
+    snap.forEach((docSnap) => {
+      questions.push({ id: docSnap.id, ...docSnap.data() } as SimuladoQuestion)
+    })
+    return questions
+  } catch (error) {
+    console.error('Erro ao buscar questões do simulado:', error)
+    return []
+  }
+}
+
+// Busca uma única questão
+export const getSimuladoQuestion = async (questionId: string): Promise<SimuladoQuestion | null> => {
+  try {
+    const docRef = doc(db, 'simuladoFinal', questionId)
+    const docSnap = await getDoc(docRef)
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as SimuladoQuestion
+    }
+    return null
+  } catch (error) {
+    console.error('Erro ao buscar questão do simulado:', error)
+    return null
+  }
+}
+
+// Salva (cria ou atualiza) uma questão — admin only
+export const saveSimuladoQuestion = async (
+  adminUid: string,
+  adminEmail: string | null,
+  question: SimuladoQuestion
+): Promise<boolean> => {
+  const isAdm = await checkIsAdmin(adminUid, adminEmail)
+  if (!isAdm) {
+    console.error('Usuário não é admin')
+    return false
+  }
+
+  try {
+    const { id, ...data } = question
+    const payload = {
+      ...data,
+      updatedAt: serverTimestamp()
+    }
+
+    if (id && !id.startsWith('new_')) {
+      // Atualização de questão existente
+      const docRef = doc(db, 'simuladoFinal', id)
+      await setDoc(docRef, payload, { merge: true })
+    } else {
+      // Nova questão — ID gerado pelo Firestore
+      const colRef = collection(db, 'simuladoFinal')
+      await addDoc(colRef, payload)
+    }
+
+    return true
+  } catch (error) {
+    console.error('Erro ao salvar questão do simulado:', error)
+    return false
+  }
+}
+
+// Exclui uma questão — admin only
+export const deleteSimuladoQuestion = async (
+  adminUid: string,
+  adminEmail: string | null,
+  questionId: string
+): Promise<boolean> => {
+  const isAdm = await checkIsAdmin(adminUid, adminEmail)
+  if (!isAdm) {
+    console.error('Usuário não é admin')
+    return false
+  }
+
+  try {
+    const docRef = doc(db, 'simuladoFinal', questionId)
+    await deleteDoc(docRef)
+    return true
+  } catch (error) {
+    console.error('Erro ao excluir questão do simulado:', error)
+    return false
   }
 }
