@@ -20,11 +20,13 @@ import {
   Gamepad2,
   RefreshCw,
   FlaskConical,
-  UserCircle
+  UserCircle,
+  FileQuestion
 } from 'lucide-react'
 import Link from 'next/link'
 import MinigameTester from '@/components/admin/minigame-tester'
 import CharacterManager from '@/components/admin/character-manager'
+import SimuladoManager from '@/components/admin/simulado-manager'
 
 export default function AdminPanel() {
   const router = useRouter()
@@ -34,7 +36,7 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<UserProfileData[]>([])
   const [ranking, setRanking] = useState<RankingEntry[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
-  const [activeTab, setActiveTab] = useState<'game' | 'minigames' | 'characters' | 'users' | 'ranking'>('game')
+  const [activeTab, setActiveTab] = useState<'game' | 'minigames' | 'characters' | 'simulado' | 'users' | 'ranking'>('game')
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null)
 
   // Check admin access
@@ -151,10 +153,10 @@ export default function AdminPanel() {
       {/* Navigation Tabs */}
       <nav className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab('game')}
-              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'game'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -165,7 +167,7 @@ export default function AdminPanel() {
             </button>
             <button
               onClick={() => setActiveTab('minigames')}
-              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'minigames'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -176,7 +178,7 @@ export default function AdminPanel() {
             </button>
             <button
               onClick={() => setActiveTab('characters')}
-              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'characters'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -186,8 +188,19 @@ export default function AdminPanel() {
               Personagens
             </button>
             <button
+              onClick={() => setActiveTab('simulado')}
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
+                activeTab === 'simulado'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FileQuestion className="w-4 h-4 inline-block mr-2" />
+              Simulado Final
+            </button>
+            <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'users'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -198,7 +211,7 @@ export default function AdminPanel() {
             </button>
             <button
               onClick={() => setActiveTab('ranking')}
-              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === 'ranking'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -343,6 +356,22 @@ export default function AdminPanel() {
             <CharacterManager 
               adminUid={firebaseUser.uid} 
               adminEmail={firebaseUser.email} 
+            />
+          </div>
+        )}
+
+        {/* Simulado Final Tab */}
+        {activeTab === 'simulado' && firebaseUser && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="font-bold text-foreground text-lg">Simulado Final</h2>
+              <p className="text-sm text-muted-foreground">
+                Gerencie as questões do simulado final. A imagem é opcional e salva diretamente no Firestore (sem Storage).
+              </p>
+            </div>
+            <SimuladoManager
+              adminUid={firebaseUser.uid}
+              adminEmail={firebaseUser.email}
             />
           </div>
         )}
